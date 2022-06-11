@@ -3,13 +3,11 @@ import numpy as np
 from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
 from model_mesh import Model, ModelMesh
-import pyrr
+import pyrr, math
 
 from texture import Material
 
 WIDTH, HEIGHT = 960, 540
-
-
 class GameApp:
 
     def __init__(self):
@@ -28,15 +26,31 @@ class GameApp:
 
         glUniform1i(glGetUniformLocation(self.shader, 'imageTexture'), 0)
         glEnable(GL_DEPTH_TEST)
-        glClearColor(1.0, 1.0, 1.0, 1)
 
-        self.wood_texture = Material('textures/8.png')
-        self.cube_mesh = ModelMesh("models/8.obj")
-        self.cube = Model(
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glClearColor(.5, .5, 1.0, 1)
+        
+        self.ball4 = Model(
             position=[0, 0, -1],
-            eulers=[0, 0, 0, ]
+            eulers=[0, 0, 0, ],
+            mesh = ModelMesh("models/ball.obj"),
+            texture = Material('textures/4.png')
         )
-
+        
+        self.ball8 = Model(
+            position=[-0.5, 0, -1],
+            eulers=[0, 0, 0, ],
+            mesh = ModelMesh("models/ball.obj"),
+            texture = Material('textures/8.png')
+        )
+        
+        self.plane = Model(
+            position=[0, -0.1, -1],
+            eulers=[math.pi  * 0.75, math.pi  / 4, math.pi  / 4],
+            mesh = ModelMesh("models/plane.obj"),
+            texture = Material('textures/felt.bmp')
+        )
 
         projection_transorm=pyrr.matrix44.create_perspective_projection(
             fovy = 45, aspect = WIDTH/HEIGHT,
@@ -69,36 +83,50 @@ class GameApp:
                 if event.type == pygame.QUIT:
                     self.quit()
                     
-            self.cube.eulers[2] += 0.25
-            if self.cube.eulers[2] > 360:
-                self.cube.eulers[2] -= 360;
+            self.ball4.eulers[1] += 1
+            if self.ball4.eulers[1] > 360:
+                self.ball4.eulers[1] -= 360;
                 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glUseProgram(self.shader)
             
-            model_transform = pyrr.matrix44.create_identity(dtype=np.float32)
-            
-            model_transform = pyrr.matrix44.multiply(
-                m1 = model_transform, 
-                m2 = pyrr.matrix44.create_from_scale(
+            # model_transform = pyrr.matrix44.create_identity(dtype=np.float32)
+            self.ball4.addTransformation([
+                pyrr.matrix44.create_from_scale(
                     scale=np.array((2, 2, 2)), dtype=np.float32
-                ))
-            
-            model_transform = pyrr.matrix44.multiply(
-                m1=model_transform,
-                m2=pyrr.matrix44.create_from_eulers(eulers=np.radians(self.cube.eulers), dtype=np.float32)
-            )
-            model_transform = pyrr.matrix44.multiply(
-                m1=model_transform,
-                m2=pyrr.matrix44.create_from_translation(
-                    vec=self.cube.position,dtype=np.float32
+                ),
+                pyrr.matrix44.create_from_eulers(
+                    eulers=np.radians(self.ball4.eulers), dtype=np.float32),
+                pyrr.matrix44.create_from_translation(
+                    vec=self.ball4.position, dtype=np.float32
                 )
-            )
+            ])
             
-            glUniformMatrix4fv(self.modeMatrixLocation, 1, GL_FALSE, model_transform)
-            self.wood_texture.use()
-            glBindVertexArray(self.cube_mesh.vao)
-            glDrawArrays(GL_TRIANGLES, 0, self.cube_mesh.vertexCount)
+            self.ball8.addTransformation([
+                pyrr.matrix44.create_from_scale(
+                    scale=np.array((2, 2, 2)), dtype=np.float32
+                ),
+                pyrr.matrix44.create_from_eulers(
+                    eulers=np.radians(self.ball4.eulers), dtype=np.float32),
+                pyrr.matrix44.create_from_translation(
+                    vec=self.ball8.position, dtype=np.float32
+                )
+            ])
+            
+            self.plane.addTransformation([
+                pyrr.matrix44.create_from_scale(
+                    scale=np.array((.25, .25, .5)), dtype=np.float32
+                ),
+                pyrr.matrix44.create_from_eulers(
+                    eulers=np.radians(self.plane.eulers), dtype=np.float32),
+                pyrr.matrix44.create_from_translation(
+                    vec=self.plane.position, dtype=np.float32
+                )
+            ])
+            
+            self.ball4.draw(self.modeMatrixLocation)
+            self.ball8.draw(self.modeMatrixLocation)
+            self.plane.draw(self.modeMatrixLocation)
             pygame.display.flip()
             self.clock.tick(60)
 

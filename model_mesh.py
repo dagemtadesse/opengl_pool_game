@@ -1,13 +1,43 @@
 import numpy as np
 from OpenGL.GL import *
+import pyrr
 from objloader import ObjLoader
 
 class Model:
 
-    def __init__(self, position, eulers):
+    def __init__(self, position, eulers, mesh = None, texture = None ):
+        # The objects location in space
         self.position = np.array(position, dtype=np.float32)
+        # euler angles for rotation
         self.eulers = np.array(eulers, dtype=np.float32)
+        # tranformation on the model
+        self.modelTranformations = pyrr.matrix44.create_identity(dtype=np.float32)
+        # holds the models vertices, texture coordinated and other stuff
+        self.mesh = mesh
+        # hold the texture for the model
+        self.texture = texture
+        
+    def addTransformation(self, tranformation_matrices):
+        # addes a series of tranformation to the object
+        self.modelTranformations = pyrr.matrix44.create_identity(dtype=np.float32)
+        for tranformationMatrix in tranformation_matrices:
+            self.modelTranformations = pyrr.matrix44.multiply(
+                m1 = self.modelTranformations,
+                m2 = tranformationMatrix
+            )
+        
+    def draw(self, modelTransformationMatrixLocation):
+        """draw the object"""
+        # apply the model tranformation matrix
+        glUniformMatrix4fv(modelTransformationMatrixLocation, 1, GL_FALSE, self.modelTranformations)
+        # bind the texuture if the mesh has one
+        if not self.texture is None: self.texture.use()
+        # bind the vertex array object of the mesh
+        glBindVertexArray(self.mesh.vao)
+        # draw the faces of the mesh
+        glDrawArrays(GL_TRIANGLES, 0, self.mesh.vertexCount)
 
+        
 
 class ModelMesh():
 
