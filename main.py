@@ -30,33 +30,33 @@ class GameApp:
         glUniform1i(glGetUniformLocation(self.shader, 'imageTexture'), 0)
         glEnable(GL_DEPTH_TEST)
 
-        # glEnable(GL_BLEND)
-        # glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glClearColor(.5, .5, 1.0, 1)
 
         self.ball4 = Model(
-            position=[0, 0, -1],
+            position=[0, 0, -3],
             eulers=[0, 0, 0, ],
             mesh=ModelMesh("models/ball.obj"),
             texture=Material('textures/4.png')
         )
 
         self.ball8 = Model(
-            position=[-0.5, 0, -1],
+            position=[-0.25, 0, -3],
             eulers=[0, 0, 0, ],
             mesh=ModelMesh("models/ball.obj"),
             texture=Material('textures/8.png')
         )
 
         self.plane = Model(
-            position=[0, 0, -5],
+            position=[0, 0, -4],
             eulers=[0,0,0],
             mesh=ModelMesh("models/plane.obj"),
             texture=Material('textures/felt.bmp')
         )
 
         self.table = Model(
-            position=[0, 0, -5],
+            position=[0, 0, -4],
             eulers=[0, 0, 0],
             mesh=ModelMesh("models/table.obj"),
             texture=Material('textures/leather.jpg')
@@ -106,9 +106,6 @@ class GameApp:
                                GL_FALSE, self.setupCamera())
 
             self.ball4.addTransformation([
-                pyrr.matrix44.create_from_scale(
-                    scale=np.array((2, 2, 2)), dtype=np.float32
-                ),
                 pyrr.matrix44.create_from_eulers(
                     eulers=np.radians(self.ball4.eulers), dtype=np.float32),
                 pyrr.matrix44.create_from_translation(
@@ -117,9 +114,6 @@ class GameApp:
             ])
 
             self.ball8.addTransformation([
-                pyrr.matrix44.create_from_scale(
-                    scale=np.array((2, 2, 2)), dtype=np.float32
-                ),
                 pyrr.matrix44.create_from_eulers(
                     eulers=np.radians(self.ball4.eulers), dtype=np.float32),
                 pyrr.matrix44.create_from_translation(
@@ -128,7 +122,7 @@ class GameApp:
             ])
 
             self.plane.addTransformation([
-                pyrr.matrix44.create_from_x_rotation(theta=np.radians(-60)),
+                pyrr.matrix44.create_from_x_rotation(theta=np.radians(-45)),
                 pyrr.matrix44.create_from_translation(
                     vec=self.plane.position, dtype=np.float32
                 ),
@@ -140,14 +134,14 @@ class GameApp:
                 # ),
                 # pyrr.matrix44.create_from_eulers(
                 #     eulers=np.radians(self.ball4.eulers), dtype=np.float32),
-                pyrr.matrix44.create_from_x_rotation(theta=np.radians(-60)),
+                pyrr.matrix44.create_from_x_rotation(theta=np.radians(-45)),
                 pyrr.matrix44.create_from_translation(
                     vec=self.table.position, dtype=np.float32
                 ),
             ])
 
-            # self.ball4.draw(self.modeMatrixLocation)
-            # self.ball8.draw(self.modeMatrixLocation)
+            self.ball4.draw(self.modeMatrixLocation)
+            self.ball8.draw(self.modeMatrixLocation)
             self.table.draw(self.modeMatrixLocation)
             self.plane.draw(self.modeMatrixLocation)
             pygame.display.flip()
