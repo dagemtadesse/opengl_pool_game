@@ -2,11 +2,11 @@
  
 in vec2 fragmentTexCoord;
 
-out vec4 color;
+out vec4 outColor;
 
 uniform sampler2D imageTexture;
 
 void main()
 {
-    color = texture(imageTexture, fragmentTexCoord);
+    outColor = texture(imageTexture, fragmentTexCoord);
 }

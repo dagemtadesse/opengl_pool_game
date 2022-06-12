@@ -11,7 +11,8 @@ class Material:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
-        image = pygame.image.load(filepath).convert_alpha()
+        image = pygame.image.load(filepath)
+        image = pygame.transform.flip(image, False, True)
         image_width, image_height = image.get_rect().size
         image_data = pygame.image.tostring(image, 'RGBA')
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width,
@@ -19,7 +20,7 @@ class Material:
         glGenerateMipmap(GL_TEXTURE_2D)
 
     def use(self):
-        glActiveTexture(GL_TEXTURE0)
+        glActiveTexture(GL_TEXTURE0,)
         glBindTexture(GL_TEXTURE_2D, self.texture)
 
     def destory(self):
