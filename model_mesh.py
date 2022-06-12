@@ -30,10 +30,10 @@ class Model:
         """draw the object"""
         # apply the model tranformation matrix
         glUniformMatrix4fv(modelTransformationMatrixLocation, 1, GL_FALSE, self.modelTranformations)
-        # bind the texuture if the mesh has one
-        if not self.texture is None: self.texture.use()
         # bind the vertex array object of the mesh
         glBindVertexArray(self.mesh.vao)
+        # bind the texuture if the mesh has one
+        if not self.texture is None: self.texture.use()
         # draw the faces of the mesh
         glDrawArrays(GL_TRIANGLES, 0, self.mesh.vertexCount)
 
