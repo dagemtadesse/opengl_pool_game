@@ -1,12 +1,14 @@
 import pygame
 import numpy as np
 from OpenGL.GL import *
-from OpenGL.GL.shaders import compileProgram, compileShader
 import pyrr
-import math
+from event_handler import EventHandler
+
 
 from model_mesh import Model, ModelMesh
+from progress_bar import ProgressBar
 from texture import Material
+from utils import createShader
 
 WIDTH, HEIGHT = 960, 540
 
@@ -23,16 +25,19 @@ class GameApp:
             (WIDTH, HEIGHT), pygame.OPENGL | pygame.DOUBLEBUF)
 
         self.clock = pygame.time.Clock()
-        self.shader = self.createShader(
-            'shaders/vertex.shader', 'shaders/fragment.shader')
-        glUseProgram(self.shader)
+        self.shader = createShader(
+            'shaders/vertex.shader',
+            'shaders/fragment.shader')
 
+        glUseProgram(self.shader)
         glUniform1i(glGetUniformLocation(self.shader, 'imageTexture'), 0)
         glEnable(GL_DEPTH_TEST)
 
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glClearColor(.5, .5, 1.0, 1)
+        glClearColor(.13, .16, 0.19, 1) # rgb(34,40,49)
+
+        self.progressBar = ProgressBar()
 
         self.ball4 = Model(
             position=[0, 0, -3],
@@ -50,7 +55,7 @@ class GameApp:
 
         self.plane = Model(
             position=[0, 0, -4],
-            eulers=[0,0,0],
+            eulers=[0, 0, 0],
             mesh=ModelMesh("models/plane.obj"),
             texture=Material('textures/felt.bmp')
         )
@@ -73,34 +78,37 @@ class GameApp:
         self.modeMatrixLocation = glGetUniformLocation(self.shader, "model")
         self.viewMatrixLocation = glGetUniformLocation(self.shader, 'view')
 
+        self.addEventListeners()
         self.mainloop()
 
-    def createShader(self, vertexShaderPath, fragmentShaderPath):
-        with open(vertexShaderPath, 'r') as f:
-            vertex_src = f.readlines()
-
-        with open(fragmentShaderPath, 'r') as f:
-            fragment_src = f.readlines()
-
-        shader = compileProgram(
-            compileShader(vertex_src, GL_VERTEX_SHADER),
-            compileShader(fragment_src, GL_FRAGMENT_SHADER)
-        )
-
-        return shader
+    def addEventListeners(self):
+        def adjustPower(event):
+            if event.key == pygame.K_UP:
+                self.progressBar.value += 1
+                if (self.progressBar.value >= 5): self.progressBar.value = 5
+            if event.key == pygame.K_DOWN:
+                self.progressBar.value -= 1
+                if (self.progressBar.value <= 1): self.progressBar.value = 1
+                
+        self.eventListener = EventHandler()
+        # listen for quit event
+        self.eventListener.on(pygame.QUIT, lambda _: self.quit())
+        
+        self.eventListener.on(pygame.KEYDOWN, adjustPower)
+        
+        
+        # power level
 
     def mainloop(self):
         while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.quit()
+            self.eventListener.listen()
 
             self.ball4.eulers[2] += 1
             if self.ball4.eulers[2] > 360:
                 self.ball4.eulers[2] -= 360
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            # glUseProgram(self.shader)
+            glUseProgram(self.shader)
 
             glUniformMatrix4fv(self.viewMatrixLocation, 1,
                                GL_FALSE, self.setupCamera())
@@ -139,23 +147,28 @@ class GameApp:
                     vec=self.table.position, dtype=np.float32
                 ),
             ])
-
+            twoDModel = glGetUniformLocation(self.shader, 'twoDMode')
+            glUniform1i(twoDModel, 0)
+            
             self.ball4.draw(self.modeMatrixLocation)
             self.ball8.draw(self.modeMatrixLocation)
             self.table.draw(self.modeMatrixLocation)
+            
             self.plane.draw(self.modeMatrixLocation)
+            
+            self.progressBar.draw(self.shader)
             pygame.display.flip()
             self.clock.tick(60)
 
     def setupCamera(self, position=[1, 1, 2], ):
-        
+
         # cameraPos = pyrr.Vector3([1, 1, 1])
         # cameraTarget = pyrr.Vector3([0, 0, 0])
-        
+
         # normal = cameraPos - cameraTarget
-        
+
         # up = pyrr.vector.normalise(normal)
-        
+
         # return pyrr.matrix44.create_look_at(
         #     eye=np.array(position),
         #     target=np.array([.0, .0, .0]),

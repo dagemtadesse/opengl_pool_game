@@ -102,4 +102,4 @@ class ObjLoader:
         buffer = ObjLoader.buffer.copy() # create a local copy of the buffer list, otherwise it will overwrite the static field buffer
         ObjLoader.buffer = [] # after copy, make sure to set it back to an empty list
 
-        return np.array(indices, dtype='uint32'), np.array(buffer, dtype='float32')
+        return np.array(indices, dtype=np.int32), np.array(buffer, dtype=np.float32)

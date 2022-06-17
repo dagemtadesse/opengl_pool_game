@@ -49,7 +49,6 @@ class ModelMesh():
         self.meshVertices, self.meshBuffer = ObjLoader.load_model(modelPath)
         self.vertexCount = len(self.meshVertices)
 
-        self.vertexData = np.array(self.meshBuffer, dtype=np.float32)
 
         self.vao = glGenVertexArrays(1)
         glBindVertexArray(self.vao)
@@ -69,6 +68,6 @@ class ModelMesh():
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
                               self.meshBuffer.itemsize * 8, ctypes.c_void_p(12))
 
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
-                              self.meshBuffer.itemsize * 8, ctypes.c_void_p(20))
-        glEnableVertexAttribArray(2)
+        # glEnableVertexAttribArray(2)
+        # glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
+        #                       self.meshBuffer.itemsize * 8, ctypes.c_void_p(20))
