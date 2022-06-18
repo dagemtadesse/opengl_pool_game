@@ -4,11 +4,9 @@ from OpenGL.GL import *
 import pyrr
 from event_handler import EventHandler
 
-
-from model_mesh import Model, ModelMesh
 from progress_bar import ProgressBar
-from texture import Material
 from utils import createShader
+from transformations import tableTransformation, cueTransformation
 
 WIDTH, HEIGHT = 960, 540
 
@@ -32,40 +30,19 @@ class GameApp:
         glUseProgram(self.shader)
         glUniform1i(glGetUniformLocation(self.shader, 'imageTexture'), 0)
         glEnable(GL_DEPTH_TEST)
-
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glClearColor(.13, .16, 0.19, 1) # rgb(34,40,49)
+        glClearColor(.13, .16, 0.19, 1)  # rgb(34,40,49)
 
         self.progressBar = ProgressBar()
 
-        self.ball4 = Model(
-            position=[0, 0, -3],
-            eulers=[0, 0, 0, ],
-            mesh=ModelMesh("models/ball.obj"),
-            texture=Material('textures/4.png')
-        )
+        import items
 
-        self.ball8 = Model(
-            position=[-0.25, 0, -3],
-            eulers=[0, 0, 0, ],
-            mesh=ModelMesh("models/ball.obj"),
-            texture=Material('textures/8.png')
-        )
-
-        self.plane = Model(
-            position=[0, 0, -4],
-            eulers=[0, 0, 0],
-            mesh=ModelMesh("models/plane.obj"),
-            texture=Material('textures/felt.bmp')
-        )
-
-        self.table = Model(
-            position=[0, 0, -4],
-            eulers=[0, 0, 0],
-            mesh=ModelMesh("models/table.obj"),
-            texture=Material('textures/leather.jpg')
-        )
+        self.whiteBall = items.whiteBall
+        self.ball8 = items.ball8
+        self.plane = items.plane
+        self.table = items.table
+        self.poolCue = items.poolCue
 
         projection_transorm = pyrr.matrix44.create_perspective_projection(
             fovy=45, aspect=WIDTH/HEIGHT,
@@ -74,7 +51,6 @@ class GameApp:
 
         glUniformMatrix4fv(glGetUniformLocation(self.shader, "projection"),
                            1, GL_FALSE, projection_transorm)
-
         self.modeMatrixLocation = glGetUniformLocation(self.shader, "model")
         self.viewMatrixLocation = glGetUniformLocation(self.shader, 'view')
 
@@ -84,28 +60,25 @@ class GameApp:
     def addEventListeners(self):
         def adjustPower(event):
             if event.key == pygame.K_UP:
-                self.progressBar.value += 1
-                if (self.progressBar.value >= 5): self.progressBar.value = 5
+                self.progressBar.updateValue()
             if event.key == pygame.K_DOWN:
-                self.progressBar.value -= 1
-                if (self.progressBar.value <= 1): self.progressBar.value = 1
-                
+                self.progressBar.updateValue(decrement=True)
+            if event.key == pygame.K_SPACE:
+                self.ball8.destination = [-0.35, 0, -3],
+
         self.eventListener = EventHandler()
         # listen for quit event
         self.eventListener.on(pygame.QUIT, lambda _: self.quit())
-        
+
         self.eventListener.on(pygame.KEYDOWN, adjustPower)
-        
-        
-        # power level
 
     def mainloop(self):
         while True:
             self.eventListener.listen()
 
-            self.ball4.eulers[2] += 1
-            if self.ball4.eulers[2] > 360:
-                self.ball4.eulers[2] -= 360
+            self.whiteBall.eulers[2] += 1
+            if self.whiteBall.eulers[2] > 360:
+                self.whiteBall.eulers[2] -= 360
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glUseProgram(self.shader)
@@ -113,52 +86,33 @@ class GameApp:
             glUniformMatrix4fv(self.viewMatrixLocation, 1,
                                GL_FALSE, self.setupCamera())
 
-            self.ball4.addTransformation([
+            self.whiteBall.addTransformation([
                 pyrr.matrix44.create_from_eulers(
-                    eulers=np.radians(self.ball4.eulers), dtype=np.float32),
-                pyrr.matrix44.create_from_translation(
-                    vec=self.ball4.position, dtype=np.float32
-                )
+                    eulers=np.radians(self.whiteBall.eulers), dtype=np.float32),
             ])
 
             self.ball8.addTransformation([
                 pyrr.matrix44.create_from_eulers(
-                    eulers=np.radians(self.ball4.eulers), dtype=np.float32),
-                pyrr.matrix44.create_from_translation(
-                    vec=self.ball8.position, dtype=np.float32
-                )
+                    eulers=np.radians(self.whiteBall.eulers), dtype=np.float32),
             ])
 
-            self.plane.addTransformation([
-                pyrr.matrix44.create_from_x_rotation(theta=np.radians(-45)),
-                pyrr.matrix44.create_from_translation(
-                    vec=self.plane.position, dtype=np.float32
-                ),
-            ])
+            self.plane.addTransformation(tableTransformation)
+            self.table.addTransformation(tableTransformation)
+            self.poolCue.addTransformation(
+                cueTransformation(self.whiteBall, self.ball8))
 
-            self.table.addTransformation([
-                # pyrr.matrix44.create_from_scale(
-                #     scale=np.array((.25, .25, .5)), dtype=np.float32
-                # ),
-                # pyrr.matrix44.create_from_eulers(
-                #     eulers=np.radians(self.ball4.eulers), dtype=np.float32),
-                pyrr.matrix44.create_from_x_rotation(theta=np.radians(-45)),
-                pyrr.matrix44.create_from_translation(
-                    vec=self.table.position, dtype=np.float32
-                ),
-            ])
             twoDModel = glGetUniformLocation(self.shader, 'twoDMode')
             glUniform1i(twoDModel, 0)
-            
-            self.ball4.draw(self.modeMatrixLocation)
+
+            self.whiteBall.draw(self.modeMatrixLocation)
             self.ball8.draw(self.modeMatrixLocation)
             self.table.draw(self.modeMatrixLocation)
-            
             self.plane.draw(self.modeMatrixLocation)
-            
+            self.poolCue.draw(self.modeMatrixLocation)
+
             self.progressBar.draw(self.shader)
             pygame.display.flip()
-            self.clock.tick(60)
+            self.clock.tick(100)
 
     def setupCamera(self, position=[1, 1, 2], ):
 
