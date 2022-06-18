@@ -18,16 +18,31 @@ class Model:
         self.mesh = mesh
         # hold the texture for the model
         self.texture = texture
+        self.velocity = np.array([0, 0, 0], dtype=np.float32)
+        # print(type(self.velocity))
 
     def addTransformation(self, tranformation_matrices):
         # addes a series of tranformation to the object
         self.modelTranformations = pyrr.matrix44.create_identity(
             dtype=np.float32)
-        for tranformationMatrix in tranformation_matrices:
+        
+        naturalTransformation = [
+            pyrr.matrix44.create_from_eulers(
+                eulers=np.radians(self.eulers), dtype=np.float32),
+            pyrr.matrix44.create_from_translation(self.position)
+        ]
+
+        for tranformationMatrix in tranformation_matrices + naturalTransformation:
             self.modelTranformations = pyrr.matrix44.multiply(
                 m1=self.modelTranformations,
                 m2=tranformationMatrix
             )
+    
+            
+    def rotate(self):
+        for index in range(2):
+            self.eulers[index] = (self.eulers[index] + 1) % 360
+
 
     def draw(self, modelTransformationMatrixLocation):
         """draw the object"""
@@ -49,8 +64,6 @@ class ModelMesh():
         self.meshVertices, self.meshBuffer = ObjLoader.load_model(modelPath)
         self.vertexCount = len(self.meshVertices)
 
-        self.vertexData = np.array(self.meshBuffer, dtype=np.float32)
-
         self.vao = glGenVertexArrays(1)
         glBindVertexArray(self.vao)
 
@@ -68,7 +81,3 @@ class ModelMesh():
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
                               self.meshBuffer.itemsize * 8, ctypes.c_void_p(12))
-
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
-                              self.meshBuffer.itemsize * 8, ctypes.c_void_p(20))
-        glEnableVertexAttribArray(2)
