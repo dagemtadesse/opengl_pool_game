@@ -3,6 +3,7 @@ import numpy as np
 from OpenGL.GL import *
 import pyrr
 from event_handler import EventHandler
+from motion_controller import MotionController
 
 from progress_bar import ProgressBar
 from utils import createShader
@@ -39,10 +40,16 @@ class GameApp:
         import items
 
         self.whiteBall = items.whiteBall
-        self.ball8 = items.ball8
+        self.balls = items.balls
+        self.ball8 = items.balls[0]
         self.plane = items.plane
         self.table = items.table
         self.poolCue = items.poolCue
+        
+        print(self.whiteBall.position)
+        print(self.ball8.position)
+
+        self.motionController = MotionController(self.balls + [self.whiteBall])
 
         projection_transorm = pyrr.matrix44.create_perspective_projection(
             fovy=45, aspect=WIDTH/HEIGHT,
@@ -58,27 +65,27 @@ class GameApp:
         self.mainloop()
 
     def addEventListeners(self):
-        def adjustPower(event):
+        def handleKeypress(event):
             if event.key == pygame.K_UP:
                 self.progressBar.updateValue()
             if event.key == pygame.K_DOWN:
                 self.progressBar.updateValue(decrement=True)
+                
             if event.key == pygame.K_SPACE:
-                self.ball8.destination = [-0.35, 0, -3],
+                direction = self.ball8.position - self.whiteBall.position
+                direction /= np.linalg.norm(direction)
+                
+                self.whiteBall.velocity = (direction * self.progressBar.value) * 0.01
 
         self.eventListener = EventHandler()
         # listen for quit event
         self.eventListener.on(pygame.QUIT, lambda _: self.quit())
 
-        self.eventListener.on(pygame.KEYDOWN, adjustPower)
+        self.eventListener.on(pygame.KEYDOWN, handleKeypress)
 
     def mainloop(self):
         while True:
             self.eventListener.listen()
-
-            self.whiteBall.eulers[2] += 1
-            if self.whiteBall.eulers[2] > 360:
-                self.whiteBall.eulers[2] -= 360
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glUseProgram(self.shader)
@@ -86,15 +93,8 @@ class GameApp:
             glUniformMatrix4fv(self.viewMatrixLocation, 1,
                                GL_FALSE, self.setupCamera())
 
-            self.whiteBall.addTransformation([
-                pyrr.matrix44.create_from_eulers(
-                    eulers=np.radians(self.whiteBall.eulers), dtype=np.float32),
-            ])
-
-            self.ball8.addTransformation([
-                pyrr.matrix44.create_from_eulers(
-                    eulers=np.radians(self.whiteBall.eulers), dtype=np.float32),
-            ])
+            self.whiteBall.addTransformation([])
+            
 
             self.plane.addTransformation(tableTransformation)
             self.table.addTransformation(tableTransformation)
@@ -103,34 +103,29 @@ class GameApp:
 
             twoDModel = glGetUniformLocation(self.shader, 'twoDMode')
             glUniform1i(twoDModel, 0)
+                
 
             self.whiteBall.draw(self.modeMatrixLocation)
-            self.ball8.draw(self.modeMatrixLocation)
+            # self.ball8.draw(self.modeMatrixLocation)
             self.table.draw(self.modeMatrixLocation)
             self.plane.draw(self.modeMatrixLocation)
             self.poolCue.draw(self.modeMatrixLocation)
 
+            for ball in self.balls:
+                ball.addTransformation([pyrr.matrix44.create_from_x_rotation(theta=np.radians(-45)),])
+                ball.draw(self.modeMatrixLocation)
+                
             self.progressBar.draw(self.shader)
+            
+            self.motionController.updatePosition()
+            self.motionController.updatePoolCue(self.poolCue, self.whiteBall)
+            
             pygame.display.flip()
             self.clock.tick(100)
 
     def setupCamera(self, position=[1, 1, 2], ):
-
-        # cameraPos = pyrr.Vector3([1, 1, 1])
-        # cameraTarget = pyrr.Vector3([0, 0, 0])
-
-        # normal = cameraPos - cameraTarget
-
-        # up = pyrr.vector.normalise(normal)
-
-        # return pyrr.matrix44.create_look_at(
-        #     eye=np.array(position),
-        #     target=np.array([.0, .0, .0]),
-        #     up=np.array([.0, .0, .1])
-        # )
-
-        return pyrr.matrix44.create_identity()
-
+        return pyrr.matrix44.create_from_x_rotation(theta=np.radians(-45))
+    
     def quit(self):
         pygame.quit()
 

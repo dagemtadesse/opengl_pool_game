@@ -21,7 +21,7 @@ class ProgressBar():
     def updateValue(self, decrement = False):
         if not decrement:
             self.value += 1
-            if(self.value >= 5): self.value = 5
+            if(self.value >= 7): self.value = 7
             return
         
         self.value -= 1

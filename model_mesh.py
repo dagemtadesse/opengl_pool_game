@@ -3,6 +3,7 @@ from OpenGL.GL import *
 import pyrr
 from objloader import ObjLoader
 
+
 class Model:
 
     def __init__(self, position, eulers, mesh=None, texture=None):
@@ -17,23 +18,31 @@ class Model:
         self.mesh = mesh
         # hold the texture for the model
         self.texture = texture
-
-        self.destination = self.position
+        self.velocity = np.array([0, 0, 0], dtype=np.float32)
+        # print(type(self.velocity))
 
     def addTransformation(self, tranformation_matrices):
         # addes a series of tranformation to the object
         self.modelTranformations = pyrr.matrix44.create_identity(
             dtype=np.float32)
-        for tranformationMatrix in tranformation_matrices:
+        
+        naturalTransformation = [
+            pyrr.matrix44.create_from_eulers(
+                eulers=np.radians(self.eulers), dtype=np.float32),
+            pyrr.matrix44.create_from_translation(self.position)
+        ]
+
+        for tranformationMatrix in tranformation_matrices + naturalTransformation:
             self.modelTranformations = pyrr.matrix44.multiply(
                 m1=self.modelTranformations,
                 m2=tranformationMatrix
             )
+    
             
-        self.modelTranformations = pyrr.matrix44.multiply(
-            m1=self.modelTranformations,
-            m2=pyrr.matrix44.create_from_translation(self.position)
-        )
+    def rotate(self):
+        for index in range(2):
+            self.eulers[index] = (self.eulers[index] + 1) % 360
+
 
     def draw(self, modelTransformationMatrixLocation):
         """draw the object"""
@@ -47,7 +56,7 @@ class Model:
             self.texture.use()
         # draw the faces of the mesh
         glDrawArrays(GL_TRIANGLES, 0, self.mesh.vertexCount)
-        # self.move()
+
 
 class ModelMesh():
 
@@ -72,4 +81,3 @@ class ModelMesh():
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
                               self.meshBuffer.itemsize * 8, ctypes.c_void_p(12))
-

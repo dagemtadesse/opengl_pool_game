@@ -1,12 +1,12 @@
 import numpy as np
-import pyrr
+import random
 from model_mesh import Model, ModelMesh
 from texture import Material
 
 
 poolCue = Model(
-    position=[0, 0, -3],
-    eulers=[0, 0, 0, ],
+    position=[0, 0, -4],
+    eulers=[60, 0, 0],
     mesh=ModelMesh("models/inverted_que.obj"),
     texture=Material('textures/pool_cue.jpg')
 )
@@ -25,18 +25,19 @@ plane = Model(
     texture=Material('textures/felt.bmp')
 )
 
-ball8 = Model(
-    position=[-0.25, 0, -3],
-    eulers=[0, 0, 0, ],
-    mesh=ModelMesh("models/ball.obj"),
-    texture=Material('textures/8.png')
-)
+
+balls = [
+    Model(
+        position=[random.uniform(-1.25, 1.25), 0.02, -3.9],
+        eulers=[0, 0.02, 0, ],
+        mesh=ModelMesh("models/ball.obj"),
+        texture=Material(f'textures/{i}.png')
+    ) for i in range(1, 2)
+]
 
 whiteBall = Model(
-    position=[0, 0, -3],
+    position=[0, 0.02, -3.9],
     eulers=[0, 0, 0, ],
     mesh=ModelMesh("models/ball.obj"),
     texture=Material('textures/BallCue.jpg')
 )
-
-

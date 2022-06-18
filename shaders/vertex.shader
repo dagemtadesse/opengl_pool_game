@@ -16,7 +16,7 @@ out vec3 fragmentColor;
 void main()
 {
     if(twoDMode == 0){
-        gl_Position = projection * view * model * vec4(vertexPos, 1.0);
+        gl_Position = projection * model * view * vec4(vertexPos, 1.0);
     }else {
         gl_Position = projection * model * vec4(vertexPos, 1.0);
     }
