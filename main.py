@@ -39,17 +39,17 @@ class GameApp:
 
         import items
 
-        self.whiteBall = items.whiteBall
+        self.cueBall = items.cueBall
         self.balls = items.balls
         self.ball8 = items.balls[0]
         self.plane = items.plane
         self.table = items.table
         self.poolCue = items.poolCue
         
-        print(self.whiteBall.position)
+        print(self.cueBall.position)
         print(self.ball8.position)
 
-        self.motionController = MotionController(self.balls + [self.whiteBall])
+        self.motionController = MotionController(self.balls + [self.cueBall])
 
         projection_transorm = pyrr.matrix44.create_perspective_projection(
             fovy=45, aspect=WIDTH/HEIGHT,
@@ -72,10 +72,10 @@ class GameApp:
                 self.progressBar.updateValue(decrement=True)
                 
             if event.key == pygame.K_SPACE:
-                direction = self.ball8.position - self.whiteBall.position
+                direction = self.ball8.position - self.cueBall.position
                 direction /= np.linalg.norm(direction)
                 
-                self.whiteBall.velocity = (direction * self.progressBar.value) * 0.01
+                self.cueBall.velocity = (direction * self.progressBar.value) * 0.01
 
         self.eventListener = EventHandler()
         # listen for quit event
@@ -93,19 +93,19 @@ class GameApp:
             glUniformMatrix4fv(self.viewMatrixLocation, 1,
                                GL_FALSE, self.setupCamera())
 
-            self.whiteBall.addTransformation([])
+            self.cueBall.addTransformation([])
             
 
             self.plane.addTransformation(tableTransformation)
             self.table.addTransformation(tableTransformation)
             self.poolCue.addTransformation(
-                cueTransformation(self.whiteBall, self.ball8))
+                cueTransformation(self.cueBall, self.ball8))
 
             twoDModel = glGetUniformLocation(self.shader, 'twoDMode')
             glUniform1i(twoDModel, 0)
                 
 
-            self.whiteBall.draw(self.modeMatrixLocation)
+            self.cueBall.draw(self.modeMatrixLocation)
             # self.ball8.draw(self.modeMatrixLocation)
             self.table.draw(self.modeMatrixLocation)
             self.plane.draw(self.modeMatrixLocation)
@@ -118,7 +118,7 @@ class GameApp:
             self.progressBar.draw(self.shader)
             
             self.motionController.updatePosition()
-            self.motionController.updatePoolCue(self.poolCue, self.whiteBall)
+            self.motionController.updatePoolCue(self.poolCue, self.cueBall)
             
             pygame.display.flip()
             self.clock.tick(100)
