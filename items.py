@@ -35,7 +35,7 @@ balls = [
     ) for i in range(1, 2)
 ]
 
-whiteBall = Model(
+cueBall = Model(
     position=[0, 0.02, -3.9],
     eulers=[0, 0, 0, ],
     mesh=ModelMesh("models/ball.obj"),
